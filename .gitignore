@@ -14,3 +14,5 @@ experiment/
 uploads/
 
 *.log
+decoder_final.pth
+vgg_normalised.pth
