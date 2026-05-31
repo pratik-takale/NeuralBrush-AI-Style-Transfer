@@ -47,7 +47,7 @@ Built with PyTorch, Flask, MySQL, and Neural Style Transfer (AdaIN + VGG19).
 
 ### Home Page
 
-![Home](screenshots/home.png)
+![Home](screenshots/Home.png)
 
 ---
 
