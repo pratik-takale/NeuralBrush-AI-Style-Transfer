@@ -1,0 +1,319 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+<title>AdaIN Style Transfer</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+
+<canvas id="neuralCanvas"></canvas>
+<div class="scanlines"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-brain me-2"></i>NeuralBrush</a>
+        <button class="navbar-toggler navbar-dark" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- <li class="nav-item"><a class="nav-link" href="#">Home</a></li> -->
+                <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('gallery') }}">Gallery</a>
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('features') }}">Features</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('pricing') }}">Pricing</a>
+</li>                <!-- <li class="nav-item"><a class="nav-link" href="#">Contact</a></li> -->
+            </ul>
+                
+{% if current_user.is_authenticated %}
+
+    <a
+        href="{{ url_for('logout') }}"
+        class="nav-link"
+    >
+        Logout
+    </a>
+
+{% else %}
+
+    <a
+        href="{{ url_for('login') }}"
+        class="nav-link"
+    >
+        Sign In
+    </a>
+
+{% endif %}
+
+
+</a>
+        </div>
+    </div>
+</nav>
+
+<div class="header-section">
+    <div class="container">
+        <h1 class="display-4 fw-bold">STYLEFORGE AI</h1>
+        <p class="lead" style="border-right: 2px solid rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; width: 0; animation: typing 3.5s steps(40, end) forwards, blink-caret .75s step-end infinite; margin: 0 auto; display: inline-block; text-align: left;">Redefine Reality with AI-Powered Artistry</p>
+    </div>
+</div>
+
+<div class="container mb-5 fade-in-up">
+    <form method="post" enctype="multipart/form-data" id="uploadForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="row g-4">
+            <!-- Content Image Section -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header text-center py-3">Content Source</div>
+                    <div class="card-body text-center">
+                        <div class="preview-image mb-3" id="contentPreview">
+                            {% if content_image %}
+                                <img src="{{ url_for('send_image', filename=content_image) }}" alt="Content Image">
+                            {% else %}
+                                <span>Select Content Image</span>
+                            {% endif %}
+                        </div>
+                        {{ form.content(class="form-control", onchange="previewFile(this, 'contentPreview')") }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Style Image Section -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header text-center py-3">Style Reference</div>
+                    <div class="card-body text-center">
+                        <div class="preview-image mb-3" id="stylePreview">
+                            {% if style_image %}
+                                <img src="{{ url_for('send_image', filename=style_image) }}" alt="Style Image">
+                            {% else %}
+                                <span>Select Style Image</span>
+                            {% endif %}
+                        </div>
+                        {{ form.style(class="form-control", onchange="previewFile(this, 'stylePreview')") }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-8">
+                <div class="range-wrap">
+                    <label for="alpha" class="form-label fw-bold mb-3 d-block text-center" style="font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: #a855f7;">STYLE STRENGTH</label>
+                    <div class="position-relative">
+                        <div class="range-value" id="rangeValue">1.0</div>
+                        {{ form.alpha(class="form-control-range", id="alphaRange", type="range", min="0", max="1", step="0.1") }}
+                    </div>
+                </div>
+                <div class="text-center mt-5">
+                    {{ form.submit(class="btn btn-primary shadow-lg btn-glow") }}
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if result_image %}
+    <div class="row justify-content-center mt-5" id="resultSection">
+        <div class="col-md-8">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white fw-bold text-center py-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Stylized Result</div>
+                <div class="card-body p-0">
+                    <img src="{{ url_for('send_image', filename=result_image) }}" class="img-fluid w-100" alt="Stylized Image" style="border-radius: 0 0 20px 20px;">
+                </div>
+                <div class="card-footer text-center" style="background: transparent; border-top: none; padding-bottom: 20px;">
+                    <a href="{{ url_for('send_image', filename=result_image) }}" download class="btn btn-outline-light mt-2"><i class="fas fa-download"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="alert alert-danger mt-4 text-center" role="alert" style="background: rgba(220, 38, 38, 0.2); border-color: #dc2626; color: #fecaca;">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+</div>
+
+<section class="container examples-section fade-in-up">
+    <div class="card">
+        <div class="card-header text-center py-3">Examples</div>
+        <div class="card-body">
+            <p class="text-center text-muted mb-4">Each example shows the content image, the style below it, and the final output beside them.</p>
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="example-flow">
+                        <div class="example-inputs">
+                            <div>
+                                <div class="example-role text-center">Content Image</div>
+                                <img src="{{ url_for('send_example', filename='brad_pitt.jpg') }}" alt="Brad Pitt Content" class="example-image">
+                            </div>
+                            <div>
+                                <div class="example-role text-center">Style Image</div>
+                                <img src="{{ url_for('send_example', filename='sketch.png') }}" alt="Sketch Style" class="example-image">
+                            </div>
+                        </div>
+                        <div class="example-arrow">-&gt;</div>
+                        <div class="example-output">
+                            <div class="example-role text-center">Output</div>
+                            <img src="{{ url_for('send_example', filename='stylized_brad_pitt.jpg') }}" alt="Brad Pitt Sketch Result" class="example-image">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="example-flow">
+                        <div class="example-inputs">
+                            <div>
+                                <div class="example-role text-center">Content Image</div>
+                                <img src="{{ url_for('send_example', filename='brad_pitt.jpg') }}" alt="Brad Pitt Content" class="example-image">
+                            </div>
+                            <div>
+                                <div class="example-role text-center">Style Image</div>
+                                <img src="{{ url_for('send_example', filename='picasso_seated_nude_hr.jpg') }}" alt="Picasso Seated Nude Style" class="example-image">
+                            </div>
+                        </div>
+                        <div class="example-arrow">-&gt;</div>
+                        <div class="example-output">
+                            <div class="example-role text-center">Output</div>
+                            <img src="{{ url_for('send_example', filename='stylized_brad_pitt (1).jpg') }}" alt="Brad Pitt Picasso Result" class="example-image">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container faq-section fade-in-up">
+    <div class="card">
+        <div class="card-header text-center py-3">FAQs</div>
+        <div class="card-body">
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqHeadingOne">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne" aria-expanded="false" aria-controls="faqOne">
+                            1. Is it a pretrained model?
+                        </button>
+                    </h2>
+                    <div id="faqOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            No, we train a model ourselves.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqHeadingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo" aria-expanded="false" aria-controls="faqTwo">
+                            2. Is it a free platform?
+                        </button>
+                    </h2>
+                    <div id="faqTwo" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            This demo is currently available as a free experience.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqHeadingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree" aria-expanded="false" aria-controls="faqThree">
+                            3. Which styles of painting can be used?
+                        </button>
+                    </h2>
+                    <div id="faqThree" class="accordion-collapse collapse" aria-labelledby="faqHeadingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            You can use almost any painting style image (impressionist, abstract, cubist, watercolor, sketch, and more) as the style reference.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqHeadingFour">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqFour" aria-expanded="false" aria-controls="faqFour">
+                            4. Tech stack of the project?
+                        </button>
+                    </h2>
+                    <div id="faqFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Python, PyTorch, Flask.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqHeadingFive">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqFive" aria-expanded="false" aria-controls="faqFive">
+                            5. Which dataset / how big data?
+                        </button>
+                    </h2>
+                    <div id="faqFive" class="accordion-collapse collapse" aria-labelledby="faqHeadingFive" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            The model is trained on large-scale image datasets.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <h5><i class="fas fa-brain me-2"></i>NeuralArt</h5>
+                <p class="mb-4">"Every artist dips his brush in his own soul, and paints his own nature into his pictures."</p>
+                <p class="small text-muted">Empowering creators with state-of-the-art AI tools to reimagine reality through the lens of artistic expression.</p>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <h5>Quick Links</h5>
+                <a href="#" class="footer-link">Home</a>
+                <a href="#" class="footer-link">About Us</a>
+                <a href="#" class="footer-link">Showcase</a>
+                <a href="#" class="footer-link">API Docs</a>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h5>Contact Us</h5>
+                <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> 123 Innovation Dr, Tech City</p>
+                <p class="mb-2"><i class="fas fa-envelope me-2"></i> pratiktakale6122005@gmail.com</p>
+                <p class="mb-2"><i class="fas fa-phone me-2"></i> +1 (555) 123-4567</p>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <h5>Follow Us</h5>
+                <div class="d-flex mb-3">
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-github"></i></a>
+                </div>
+                <p class="small text-muted">Subscribe to our newsletter for the latest updates.</p>
+            </div>
+        </div>
+        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+        <div class="text-center text-muted small">
+            &copy; 2026 NeuralArt Inc. All rights reserved. | Privacy Policy | Terms of Service
+        </div>
+    </div>
+</footer>
+
+<!-- Loading Overlay -->
+<div class="loader-overlay" id="loader">
+    <div class="cyber-spinner mb-4"></div>
+    <h3 class="text-white" style="font-family: 'Orbitron', sans-serif; letter-spacing: 2px;">PROCESSING</h3>
+    <p class="text-muted">Neural Network is dreaming...</p>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+ 
