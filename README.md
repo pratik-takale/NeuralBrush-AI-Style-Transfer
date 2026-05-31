@@ -15,7 +15,6 @@ Built with PyTorch, Flask, MySQL, and Neural Style Transfer (AdaIN + VGG19).
 * MySQL Database Integration
 * Responsive Modern UI
 * Adjustable Style Strength
-* Before/After Comparison
 * Flask Web Deployment
 
 ---
