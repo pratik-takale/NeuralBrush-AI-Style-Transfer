@@ -1,7 +1,4 @@
 from dotenv import load_dotenv
-
-
-
 import os
 import torch
 from flask import Flask, render_template, send_from_directory
@@ -47,14 +44,8 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 
 app.config['SECRET_KEY'] = 'neuralbrush_secret'
-
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    f"mysql+pymysql://"
-    f"{os.getenv('DB_USER')}:"
-    f"{os.getenv('DB_PASSWORD')}"
-    f"@localhost/"
-    f"{os.getenv('DB_NAME')}"
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///neuralbrush.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
