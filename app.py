@@ -39,11 +39,14 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv(
+    'SECRET_KEY',
+    'neuralbrush_secret'
+)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 
-app.config['SECRET_KEY'] = 'neuralbrush_secret'
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///neuralbrush.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
