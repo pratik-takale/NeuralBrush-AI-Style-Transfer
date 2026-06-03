@@ -15,6 +15,8 @@ from flask import (
     redirect,
     url_for
 )
+from flask import session
+
 # AdaIN imports
 from utils.models import VGGEncoder, Decoder
 from utils.utils import adaptive_instance_normalization
@@ -353,16 +355,33 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
+        print("EMAIL:", email)
+
         user = User.query.filter_by(
             email=email
         ).first()
+
+        print("USER FOUND:", user)
+
+        if user:
+
+            print(
+                "PASSWORD MATCH:",
+                check_password_hash(
+                    user.password,
+                    password
+                )
+            )
 
         if user and check_password_hash(
             user.password,
             password
         ):
 
-            login_user(user)
+            login_user(user, remember=True)
+
+            print("LOGIN SUCCESS")
+            print("USER ID:", user.id)
 
             next_page = request.args.get('next')
 
@@ -370,11 +389,10 @@ def login():
                 next_page or url_for('index')
             )
 
-        else:
-            return render_template(
-                'login.html',
-                error='Invalid Email or Password'
-            )
+        return render_template(
+            'login.html',
+            error='Invalid Email or Password'
+        )
 
     return render_template('login.html')
 @app.route('/logout')
@@ -399,6 +417,20 @@ def gallery():
         'gallery.html',
         generations=generations
     )
+
+@app.route('/session-test')
+def session_test():
+
+    session['test'] = 'working'
+
+    return str(dict(session))
+@app.route('/delete-users')
+def delete_users():
+
+    User.query.delete()
+    db.session.commit()
+
+    return "All users deleted"
 @app.route('/features')
 def features():
 
@@ -428,6 +460,21 @@ def delete_image(image_id):
 with app.app_context():
 
     db.create_all()
+@app.route('/users')
+def users():
+
+    users = User.query.all()
+
+    return {
+        "count": len(users),
+        "users": [
+            {
+                "id": u.id,
+                "email": u.email
+            }
+            for u in users
+        ]
+    }
 # =========================================================
 # Run App
 # =========================================================
