@@ -418,19 +418,8 @@ def gallery():
         generations=generations
     )
 
-@app.route('/session-test')
-def session_test():
 
-    session['test'] = 'working'
 
-    return str(dict(session))
-@app.route('/delete-users')
-def delete_users():
-
-    User.query.delete()
-    db.session.commit()
-
-    return "All users deleted"
 @app.route('/features')
 def features():
 
@@ -460,21 +449,7 @@ def delete_image(image_id):
 with app.app_context():
 
     db.create_all()
-@app.route('/users')
-def users():
 
-    users = User.query.all()
-
-    return {
-        "count": len(users),
-        "users": [
-            {
-                "id": u.id,
-                "email": u.email
-            }
-            for u in users
-        ]
-    }
 # =========================================================
 # Run App
 # =========================================================
